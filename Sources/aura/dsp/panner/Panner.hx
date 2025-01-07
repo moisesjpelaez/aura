@@ -12,7 +12,16 @@ abstract class Panner extends DSP {
 	static inline var REFERENCE_DST = 1.0;
 	static inline var SPEED_OF_SOUND = 343.4; // Air, m/s
 
-	public var dopplerFactor = 1.0;
+	/**
+		The strength of the doppler effect.
+
+		This value is multiplied to the calculated doppler effect, thus:
+		- A value of `0.0` results in no doppler effect.
+		- A value between `0.0` and `1.0` attenuates the effect (smaller values: more attenuation).
+		- A value of `1.0` does not attenuate or amplify the doppler effect.
+		- A value larger than `1.0` amplifies the doppler effect (larger values: more amplification).
+	**/
+	public var dopplerStrength = 1.0;
 
 	public var attenuationMode = AttenuationMode.Inverse;
 	public var attenuationFactor = 1.0;
@@ -25,9 +34,6 @@ abstract class Panner extends DSP {
 		The location of this audio source in world space.
 	**/
 	var location: Vec3 = new Vec3(0, 0, 0);
-	var lastLocation: Vec3 = new Vec3(0, 0, 0);
-	var lastLocationUpdateTime: Float = 0.0;
-	var initializedLocation = false;
 
 	/**
 		The velocity of this audio source in world space.
@@ -54,9 +60,9 @@ abstract class Panner extends DSP {
 		or the listener's position or rotation.
 	**/
 	public function update3D() {
-		final dirToChannel = this.location.sub(Aura.listener.location);
-		calculateAttenuation(dirToChannel);
-		calculateDoppler();
+		final displacementToSource = location.sub(Aura.listener.location);
+		calculateAttenuation(displacementToSource);
+		calculateDoppler(displacementToSource);
 	};
 
 	/**
@@ -72,24 +78,41 @@ abstract class Panner extends DSP {
 
 	/**
 		Set the location of this panner in world space.
+
+		Calling this function also sets the panner's velocity if the call
+		to this function is not the first call for this panner. This behavior
+		avoids audible "jumps" in the doppler effect for initial placement
+		of objects if they are far away from the origin.
 	**/
 	public function setLocation(location: Vec3) {
 		final time = Time.getTime();
+		final timeDeltaLastCall = time - _setLocation_lastCallTime;
 
-		this.lastLocation.setFrom(this.location);
-
-		if (!initializedLocation) {
-			// Prevent jumps in the doppler effect caused by initial distance
-			// too far away from the origin
-			initializedLocation = true;
-		} else {
-			final timeDelta = time - lastLocationUpdateTime;
-			this.velocity.setFrom(location.sub(this.lastLocation).mult(1 / timeDelta));
+		// If the last time setLocation() was called was at an earlier time step
+		if (timeDeltaLastCall > 0) {
+			_setLocation_lastLocation.setFrom(this.location);
+			_setLocation_lastVelocityUpdateTime = _setLocation_lastCallTime;
 		}
 
+		final timeDeltaVelocityUpdate = time - _setLocation_lastVelocityUpdateTime;
+
 		this.location.setFrom(location);
-		this.lastLocationUpdateTime = time;
+
+		if (!_setLocation_initializedLocation) {
+			// Prevent jumps in the doppler effect caused by initial distance
+			// too far away from the origin
+			_setLocation_initializedLocation = true;
+		}
+		else if (timeDeltaVelocityUpdate > 0) {
+			velocity.setFrom(location.sub(_setLocation_lastLocation).mult(1 / timeDeltaVelocityUpdate));
+		}
+
+		_setLocation_lastCallTime = time;
 	}
+	var _setLocation_initializedLocation = false;
+	var _setLocation_lastLocation: Vec3 = new Vec3(0, 0, 0);
+	var _setLocation_lastCallTime: Float = 0.0;
+	var _setLocation_lastVelocityUpdateTime: Float = 0.0;
 
 	function calculateAttenuation(dirToChannel: FastVector3) {
 		final dst = maxF(REFERENCE_DST, dirToChannel.length);
@@ -104,14 +127,13 @@ abstract class Panner extends DSP {
 		handle.channel.sendMessage({ id: ChannelMessageID.PDstAttenuation, data: dstAttenuation });
 	}
 
-	function calculateDoppler() {
+	function calculateDoppler(displacementToSource: FastVector3) {
 		final listener = Aura.listener;
 
 		var dopplerRatio: FastFloat = 1.0;
-		if (dopplerFactor != 0.0 && (listener.velocity.length != 0 || this.velocity.length != 0)) {
-			final displacementToSource = this.location.sub(listener.location);
-			final dist = displacementToSource.length;
+		if (dopplerStrength != 0.0 && (listener.velocity.length != 0 || this.velocity.length != 0)) {
 
+			final dist = displacementToSource.length;
 			if (dist == 0) {
 				// We don't have any radial velocity here...
 				handle.channel.sendMessage({ id: ChannelMessageID.PDopplerRatio, data: 1.0 });
@@ -130,7 +152,7 @@ abstract class Panner extends DSP {
 			}
 
 			dopplerRatio = (SPEED_OF_SOUND + vr) / (SPEED_OF_SOUND + vs);
-			dopplerRatio = Math.pow(dopplerRatio, dopplerFactor);
+			dopplerRatio = Math.pow(dopplerRatio, dopplerStrength);
 		}
 
 		if (dopplerRatio != null) {
