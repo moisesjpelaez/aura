@@ -7,13 +7,11 @@ const targetsHL = ["windows-hl", "linux-hl", "osx-hl", "android-hl", "ios-hl"];
 const targetsCPP = ["windows", "linux", "osx"];
 const targetsHTML5 = ["html5", "debug-html5"];
 
-function addBackends(project) {
-	project.localLibraryPath = "Backends";
-
+async function addBackends(project) {
 	const isHL = targetsHL.indexOf(Project.platform) >= 0;
 
 	if (isHL) {
-		project.addLibrary("hl");
+		await project.addProject("Backends/hl");
 		project.addDefine("AURA_BACKEND_HL");
 		console.log("[Aura] Using HL/C backend");
 	}
@@ -32,7 +30,7 @@ async function main() {
 	project.addSources('Sources');
 
 	if (process.argv.indexOf("--aura-no-backend") == -1) {
-		addBackends(project);
+		await addBackends(project);
 	}
 	else {
 		project.addDefine("AURA_NO_BACKEND");

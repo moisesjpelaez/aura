@@ -2,7 +2,6 @@ package aura.channels;
 
 import aura.channels.MixChannel.MixChannelHandle;
 import aura.dsp.DSP;
-import aura.dsp.panner.Panner;
 import aura.threading.Fifo;
 import aura.threading.Message;
 import aura.types.AudioBuffer;
@@ -31,8 +30,8 @@ class BaseChannelHandle {
 	public var finished(get, never): Bool;
 	inline function get_finished(): Bool { return channel.finished; }
 
-	public var panner(get, null): Null<Panner>;
-	inline function get_panner(): Null<Panner> { return channel.panner; }
+	public var panner(get, null): Null<DSP>;
+	inline function get_panner(): Null<DSP> { return channel.panner; }
 
 	/**
 		Link to the audio channel in the audio thread.
@@ -156,12 +155,11 @@ class BaseChannelHandle {
 @:allow(aura.Aura)
 @:access(aura.dsp.DSP)
 @:allow(aura.dsp.panner.Panner)
-@:access(aura.dsp.panner.Panner)
 abstract class BaseChannel {
 	final messages: Fifo<Message> = new Fifo();
 
 	final inserts: Array<DSP> = [];
-	var panner: Null<Panner> = null;
+	var panner: Null<DSP> = null;
 
 	// Parameters
 	final pVolume = new LinearInterpolator(1.0);
