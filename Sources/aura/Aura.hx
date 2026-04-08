@@ -136,7 +136,7 @@ class Aura {
 				continue;
 			}
 			Assets.loadSound(soundName, (sound: kha.Sound) -> {
-				#if (!kha_krom && !hl) // Krom only uses uncompressedData. Kore-HL doesn't fully support compressed streaming yet.
+				#if !kha_krom // Krom only uses uncompressedData
 					if (sound.compressedData == null) {
 						throw 'Cannot compress already uncompressed sound ${soundName}!';
 					}
@@ -329,8 +329,8 @@ class Aura {
 			(e.g. in case of circular dependencies)
 	**/
 	public static function createCompBufferChannel(sound: kha.Sound, loop: Bool = false, mixChannelHandle: Null<MixChannelHandle> = null): Null<BaseChannelHandle> {
-		#if (kha_krom || hl)
-			// Krom only uses uncompressedData -> no streaming. Kore-HL doesn't fully support compressed streaming yet.
+		#if kha_krom
+			// Krom only uses uncompressedData -> no streaming
 			return createUncompBufferChannel(sound, loop, mixChannelHandle);
 		#end
 
