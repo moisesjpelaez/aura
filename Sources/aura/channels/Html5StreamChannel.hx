@@ -65,7 +65,7 @@ class Html5StreamChannel extends BaseChannel {
 		audioElement = Browser.document.createAudioElement();
 		source = audioContext.createMediaElementSource(audioElement);
 
-		final mimeType = #if kha_debug_html5 "audio/ogg" #else "audio/mp4" #end;
+		final mimeType = sound.compressedData.isByteMagic(0, "OggS") ? "audio/ogg" : "audio/mp4";
 		final soundData: ArrayBuffer = sound.compressedData.getData();
 		final blob = new js.html.Blob([soundData], {type: mimeType});
 
