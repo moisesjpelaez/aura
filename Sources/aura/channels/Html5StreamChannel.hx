@@ -186,12 +186,9 @@ class Html5StreamChannel extends BaseChannel {
 	}
 
 	/**
-		For manual clean up when `BaseChannelHandle.setMixChannel(null)` is used.
-		Useful e.g. when changing scenes in Armory.
-
-		Usage: `#if (kha_html5 || kha_debug_html5) untyped cast(@:privateAccess BaseChannelHandle.channel).cleanUp(); #end`.
+		Clean up Web Audio nodes. Called automatically when `BaseChannelHandle.setMixChannel(null)` is used.
 	**/
-	@:keep public function cleanUp() {
+	override function cleanUp() {
 		source.disconnect();
 		splitter.disconnect();
 		leftGain.disconnect();
@@ -323,12 +320,9 @@ class Html5MobileStreamChannel extends BaseChannel {
 	}
 
 	/**
-		For manual clean up when `BaseChannelHandle.setMixChannel(null)` is used.
-		Useful e.g. when changing scenes in Armory.
-
-		Usage: `#if (kha_html5 || kha_debug_html5) untyped cast(@:privateAccess BaseChannelHandle.channel).cleanUp(); #end`.
+		Clean up Web Audio nodes. Called automatically when `BaseChannelHandle.setMixChannel(null)` is used.
 	**/
-	@:keep public function cleanUp() {
+	override function cleanUp() {
 		@:privateAccess khaChannel.source.onended = null;
 		@:privateAccess khaChannel.source.disconnect();
 		splitter.disconnect();

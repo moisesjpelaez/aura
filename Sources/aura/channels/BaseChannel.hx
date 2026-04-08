@@ -93,6 +93,7 @@ class BaseChannelHandle {
 		}
 
 		if (mixChannelHandle == null) {
+			channel.cleanUp();
 			return true;
 		}
 
@@ -230,6 +231,8 @@ abstract class BaseChannel {
 			panner.synchronize();
 		}
 	}
+
+	function cleanUp() {}
 
 	function parseMessage(message: Message) {
 		switch (message.id) {
