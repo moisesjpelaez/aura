@@ -44,8 +44,12 @@ class StreamChannel extends BaseChannel {
 		}
 		final khaBuffer = p_khaBuffer.get();
 
-		khaChannel.nextSamples(khaBuffer, requestedSamples.channelLength, sampleRate);
+		khaChannel.nextSamples(khaBuffer, requestedSamples.numChannels * requestedSamples.channelLength, sampleRate);
 		requestedSamples.deinterleaveFromFloat32Array(khaBuffer, requestedSamples.numChannels);
+
+		if (khaChannel.finished) {
+			finished = true;
+		}
 	}
 
 	override function parseMessage(message: Message) {

@@ -43,7 +43,7 @@ abstract class Panner extends DSP {
 	public function new(handle: BaseChannelHandle) {
 		this.inUse = true; // Don't allow using panners with addInsert()
 		this.handle = handle;
-		this.handle.channel.panner = this;
+		handle.channel.panner = this;
 	}
 
 	public inline function setHandle(handle: BaseChannelHandle) {
@@ -52,7 +52,7 @@ abstract class Panner extends DSP {
 		}
 		reset3D();
 		this.handle = handle;
-		this.handle.channel.panner = this;
+		handle.channel.panner = this;
 	}
 
 	/**
